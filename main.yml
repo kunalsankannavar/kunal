@@ -1,0 +1,49 @@
+---
+    - name: ansible api calls
+      hosts: localhost
+      connection: local
+      gather_facts: false
+      tasks:
+        - name: Include variables
+          include_vars: 
+            file: secrets.yml
+            name: secret
+        - name: vcenter login
+          uri:
+            url: "https://{{secret.hostname}}/rest/com/vmware/cis/session"
+            force_basic_auth: yes
+            method: POST
+            user: "{{secret.username}}"
+            password: "{{secret.password}}"
+            status_code: 200
+            validate_certs: no
+          register: login
+        - name: get vcenter vms 
+          uri:
+            url: "https://{{secret.hostname}}/rest/vcenter/vm"
+            force_basic_auth: yes
+            validate_certs: no
+            headers:
+              Cookie: "{{login.set_cookie}}"
+          register: vcvms
+        - name: Print names of VMs in the given vCenter
+          debug:
+            msg: "{{ item.name }}"
+          with_items: "{{ vcvms.json.value}}"
+        - name: get vcenter networks 
+          uri:
+            url: "https://{{secret.hostname}}/rest/vcenter/network"
+            force_basic_auth: yes
+            validate_certs: no
+            headers:
+              Cookie: "{{login.set_cookie}}"
+          register: vcnetworks
+        - name: Print names of network in the given vCenter
+          debug:
+            msg: "{{ item.name }}"
+          with_items: "{{ vcnetworks.json.value }}"
+
+
+      
+    
+      
