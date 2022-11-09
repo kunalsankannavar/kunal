@@ -1,6 +1,6 @@
 ---
 - name: VM playbook
-  hosts: localhost
+  hosts: 10.42.65.89
   gather_facts: false
   collections:
     - nutanix.ncp
