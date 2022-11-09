@@ -1,0 +1,37 @@
+---
+- name: VM playbook
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - nutanix.ncp
+  module_defaults:
+    group/nutanix.ncp.ntnx:
+      nutanix_host: 10.42.65.39
+      nutanix_username: admin
+      nutanix_password: Nutanix@123
+      validate_certs: false
+  tasks:
+  - name: create Vm
+    ntnx_vms:
+      state: present
+      name: "Windows_ansible_automation_demo01"
+      desc: "ansible_vm_description"
+      categories:
+        OSType:
+          - "Windows"
+      cluster:
+        name: "PHX-POC065"
+      networks:
+        - is_connected: True
+          subnet:
+            name: "sec-manage"
+      disks:
+        - type: "DISK"
+          size_gb: 100
+          bus: "SATA"
+          clone_image:
+            name: "Win_2019.qcow2"
+      vcpus: 2
+      cores_per_vcpu: 1
+      memory_gb: 4
+    register: output
