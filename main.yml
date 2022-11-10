@@ -8,9 +8,9 @@
           include_vars: 
             file: secrets.yml
             name: secret
-        - name: vcenter login
+        - name: PC login
           uri:
-            url: "https://{{secret.hostname}}/rest/com/vmware/cis/session"
+            url: "https://{{secret.hostname}}:9440/api/nutanix/v3/blueprints/list"
             force_basic_auth: yes
             method: POST
             user: "{{secret.username}}"
@@ -20,19 +20,19 @@
           register: login
         - name: get vcenter vms 
           uri:
-            url: "https://{{secret.hostname}}/rest/vcenter/vm"
+            url: "https://{{secret.hostname}}:9440/api/nutanix/v3/vms/list"
             force_basic_auth: yes
             validate_certs: no
             headers:
               Cookie: "{{login.set_cookie}}"
           register: vcvms
-        - name: Print names of VMs in the given vCenter
+        - name: Print names of VMs in the given Nutanix 
           debug:
             msg: "{{ item.name }}"
           with_items: "{{ vcvms.json.value}}"
         - name: get vcenter networks 
           uri:
-            url: "https://{{secret.hostname}}/rest/vcenter/network"
+            url: "https://{{secret.hostname}}:9440/api/nutanix/v3/subnets/list"
             force_basic_auth: yes
             validate_certs: no
             headers:
