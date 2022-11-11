@@ -1,6 +1,6 @@
 ---
 - name: VM playbook
-  hosts: localhost
+  hosts: 10.42.65.59
   gather_facts: false
   vars_files:
     - secret_vars
