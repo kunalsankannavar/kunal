@@ -2,7 +2,7 @@
 # Authenticate with Prism Central and and store session cookies.
 # Minor changes to original code provided by the mbach04.nutanix_vm_provisioner ansible role.
     - name: ansible api calls
-      hosts: localhost
+      hosts: 10.42.65.89
       connection: local
       gather_facts: false
       tasks:
