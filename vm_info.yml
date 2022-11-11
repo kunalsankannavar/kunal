@@ -1,0 +1,8 @@
+---
+cluster_name: PHX-POC065
+vm_name: AnsibleTestVM02
+network_name: sec-manage
+disk_image: Win_2019.qcow2
+vcpus: 2
+cores_per_vcpu: 1
+memory_gb: 4
