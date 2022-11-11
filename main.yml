@@ -1,4 +1,6 @@
 ---
+# Authenticate with Prism Central and and store session cookies.
+# Minor changes to original code provided by the mbach04.nutanix_vm_provisioner ansible role.
     - name: ansible api calls
       hosts: localhost
       connection: local
@@ -8,42 +10,55 @@
           include_vars: 
             file: secrets.yml
             name: secret
-        - name: PC login
+        - name: Authenticate to Prism Central 
+          uri:
+            url: "https://{{secret.hostname}}:9440/api/nutanix/v3/clusters/list"
+            body:
+              kind: cluster
+              sort_order: ASCENDING
+              offset: 0
+              length: 10
+              sort_attribute: ''
+            method: POST
+            validate_certs: no
+            force_basic_auth: yes
+            body_format: json
+            user: "{{ secret.username }}"
+            password: "{{ secret.password }}"
+            status_code: 200
+            return_content: yes
+          register: pc_login
+          ignore_errors: yes
+
+        - name: Store session cookie for Prism Central
+          set_fact:
+            pc_session_cookie: "{{ pc_login.set_cookie }}"
+
+        - name: Debug | Print session cookie for Prism Central
+          debug:
+            msg: "Session cookie for Prism Central is {{ pc_session_cookie }}"
+        - name: Get Blueprint List
           uri:
             url: "https://{{secret.hostname}}:9440/api/nutanix/v3/blueprints/list"
-            force_basic_auth: yes
+            body:
+              length: 200
+              offset: 0
+              filter: ""
             method: POST
-            user: "{{secret.username}}"
-            password: "{{secret.password}}"
+            validate_certs: no
+            body_format: json
             status_code: 200
-            validate_certs: no
-          register: login
-        - name: get vcenter vms 
-          uri:
-            url: "https://{{secret.hostname}}:9440/api/nutanix/v3/vms/list"
-            force_basic_auth: yes
-            validate_certs: no
-            headers:
-              Cookie: "{{login.set_cookie}}"
-          register: vcvms
-        - name: Print names of VMs in the given Nutanix 
-          debug:
-            msg: "{{ item.name }}"
-          with_items: "{{ vcvms.json.value}}"
-        - name: get vcenter networks 
-          uri:
-            url: "https://{{secret.hostname}}:9440/api/nutanix/v3/subnets/list"
-            force_basic_auth: yes
-            validate_certs: no
-            headers:
-              Cookie: "{{login.set_cookie}}"
-          register: vcnetworks
-        - name: Print names of network in the given vCenter
-          debug:
-            msg: "{{ item.name }}"
-          with_items: "{{ vcnetworks.json.value }}"
+            headers: 
+              Cookie: "{{ pc_session_cookie }}"
+          register: json_images_result
+          ignore_errors: yes
 
+        - name: Store the blueprint names/UUIDs
+          set_fact:
+            blueprints_uuids: "{{ blueprints_uuids|default([]) + [ {'name': item.status.name, 'uuid': item.metadata.uuid }] }}"
+          with_items: "{{ json_images_result.json.entities }}"
 
-      
-    
+        - name: Debug | Print Blueprint names/UUIDs
+          debug:
+            msg: "Blueprint names/uuids are: {{ blueprints_uuids }}"
       
