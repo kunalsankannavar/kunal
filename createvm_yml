@@ -1,0 +1,50 @@
+---
+- name: VM playbook
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - secret_vars
+  collections:
+    - nutanix.ncp
+  module_defaults:
+    group/nutanix.ncp.ntnx:
+      nutanix_host: "{{hostname}}"
+      nutanix_username: "{{username}}"
+      nutanix_password: "{{password}}"
+      validate_certs: false
+  tasks:
+  - name: Include variables
+    include_vars: 
+      file: vm_info.yml
+      name: vm
+  - name: Include secrets
+    include_vars: 
+      file: secret.yml
+      name: secret
+  - name: create Vm
+    ntnx_vms:
+      state: present
+      name: "{{vm.vm_name}}"
+      desc: "ansible_vm_description"
+      categories:
+        OSType:
+          - "Windows"
+      cluster:
+        name: "{{vm.cluster_name}}"
+      networks:
+        - is_connected: True
+          subnet:
+            name: "{{vm.network_name}}"
+      disks:
+        - type: "DISK"
+          size_gb: 100
+          bus: "SATA"
+          clone_image:
+            name: "{{vm.disk_image}}"
+      vcpus: "{{vm.vcpus}}"
+      cores_per_vcpu: "{{vm.cores_per_vcpu}}"
+      memory_gb: "{{vm.memory_gb}}"
+    register: output
+  - name: output of vm created
+    debug:
+      msg: '{{ output }}'
